@@ -282,6 +282,10 @@ function fetchTournamentData() {
   fetch('worldcup.json')
     .then(res => res.json())
     .then(data => {
+      // Ensure all matches have a unique 'num' identifier (missing for matches 1-72 in json)
+      data.matches.forEach((m, idx) => {
+        m.num = m.num || (idx + 1);
+      });
       baseMatches = data.matches;
       elements.loading.classList.add('hidden');
       
