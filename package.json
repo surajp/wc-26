@@ -1,0 +1,18 @@
+{
+  "name": "soccer-world-cup-2026",
+  "version": "1.0.0",
+  "description": "Interactive tracker and predictor for the FIFA World Cup 2026, hosted at soccerworldcup.xyz",
+  "main": "app.js",
+  "scripts": {
+    "dev": "npx -y http-server -p 8085"
+  },
+  "keywords": [
+    "worldcup",
+    "soccer",
+    "predictor",
+    "realtime-scores",
+    "standings"
+  ],
+  "author": "Antigravity",
+  "license": "MIT"
+}

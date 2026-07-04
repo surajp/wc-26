@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FIFA World Cup 2026 Tracker & Predictor</title>
+  
+  <!-- Font Preconnect & Import -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="style.css">
+  
+  <!-- FOUC (Flash of Unstyled Content) Prevention for Dark Mode -->
+  <meta name="color-scheme" content="light dark">
+  <script>
+    {
+      const colorScheme = localStorage.getItem("color-scheme");
+      if (colorScheme) {
+        document.querySelector('meta[name="color-scheme"]').content = colorScheme;
+        document.documentElement.setAttribute('data-theme', colorScheme);
+      }
+    }
+  </script>
+</head>
+<body>
+  
+  <!-- Notification Container -->
+  <div id="notification-area" class="notification-area"></div>
+
+  <div class="app-container">
+    
+    <!-- Hero Banner Header -->
+    <header class="app-header">
+      <div class="header-overlay"></div>
+      <div class="header-content">
+        <div class="header-top">
+          <div class="logo-area">
+            <span class="trophy-icon">🏆</span>
+            <div>
+              <h1>WORLD CUP 2026</h1>
+              <p class="subtitle">United: USA, Canada & Mexico</p>
+            </div>
+          </div>
+          <div class="header-controls">
+            <span class="live-badge" id="live-indicator">● LIVE SIMULATOR ACTIVE</span>
+            <button id="theme-toggle" class="theme-toggle-btn" aria-label="Toggle dark mode">
+              <span class="toggle-icon">🌓</span>
+            </button>
+          </div>
+        </div>
+        
+        <!-- Live Countdown & Mini-Ticker -->
+        <div class="hero-stats">
+          <div class="stat-card">
+            <div class="stat-value" id="stats-goals">--</div>
+            <div class="stat-label">Total Goals</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="stats-matches">--/104</div>
+            <div class="stat-label">Matches Played</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="stats-avg-goals">--</div>
+            <div class="stat-label">Avg Goals/Match</div>
+          </div>
+          <div class="stat-card countdown-card">
+            <div class="stat-value" id="countdown-timer">--d --h --m</div>
+            <div class="stat-label">Countdown to Final</div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Tab Navigation -->
+    <nav class="tab-navigation" aria-label="Main Navigation">
+      <button class="tab-btn active" data-tab="overview">
+        <span class="tab-icon">📊</span> Overview
+      </button>
+      <button class="tab-btn" data-tab="standings">
+        <span class="tab-icon">🏅</span> Standings
+      </button>
+      <button class="tab-btn" data-tab="matches">
+        <span class="tab-icon">📅</span> Matches
+      </button>
+      <button class="tab-btn" data-tab="bracket">
+        <span class="tab-icon">🌿</span> Bracket
+      </button>
+      <button class="tab-btn" data-tab="predictor">
+        <span class="tab-icon">🔮</span> Predictor
+      </button>
+    </nav>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+      
+      <!-- Loading Spinner -->
+      <div id="loading" class="loading-container">
+        <div class="spinner"></div>
+        <p>Fetching World Cup Data...</p>
+      </div>
+
+      <!-- Tab: Overview -->
+      <section id="tab-overview" class="tab-panel active">
+        <div class="dashboard-grid">
+          
+          <!-- Left Column: Live Match & Highlights -->
+          <div class="dashboard-left">
+            <div class="live-match-banner card" id="live-match-banner">
+              <!-- Dynamically populated live match -->
+            </div>
+            
+            <div class="highlights-section card">
+              <h3 id="todays-matches-heading">Today's Matches (July 2, 2026)</h3>
+              <div class="todays-matches-list" id="todays-matches-list">
+                <!-- Dynamically populated -->
+              </div>
+            </div>
+          </div>
+          
+          <!-- Right Column: Recent Results & Upcoming Matches -->
+          <div class="dashboard-right">
+            <div class="upcoming-section card">
+              <h3>Upcoming Knockout Schedule</h3>
+              <div class="upcoming-matches-list" id="upcoming-matches-list">
+                <!-- Dynamically populated -->
+              </div>
+            </div>
+            
+            <div class="recent-results-section card">
+              <h3>Recent Results</h3>
+              <div class="recent-results-list" id="recent-results-list">
+                <!-- Dynamically populated -->
+              </div>
+            </div>
+          </div>
+          
+        </div>
+      </section>
+
+      <!-- Tab: Standings -->
+      <section id="tab-standings" class="tab-panel">
+        <div class="standings-header">
+          <h2>Group Stage Standings</h2>
+          <p>The top 2 teams from each group plus the 8 best third-placed teams qualify for the Round of 32.</p>
+        </div>
+        
+        <!-- Toggle between Groups Grid and 3rd-Place Ranking -->
+        <div class="standings-sub-nav">
+          <button class="sub-tab-btn active" id="btn-show-groups">All Groups (A-L)</button>
+          <button class="sub-tab-btn" id="btn-show-thirds">3rd-Place Team Rankings</button>
+        </div>
+        
+        <!-- Groups Grid View -->
+        <div class="groups-grid" id="groups-grid">
+          <!-- Dynamically populated with 12 group tables -->
+        </div>
+        
+        <!-- Third-Place Table View -->
+        <div class="thirds-container hidden" id="thirds-container">
+          <div class="card">
+            <h3>Best 3rd-Placed Teams Ranking</h3>
+            <div class="table-responsive">
+              <table class="standings-table thirds-table">
+                <thead>
+                  <tr>
+                    <th>Pos</th>
+                    <th>Group</th>
+                    <th>Team</th>
+                    <th>P</th>
+                    <th>W</th>
+                    <th>D</th>
+                    <th>L</th>
+                    <th>GF</th>
+                    <th>GA</th>
+                    <th>GD</th>
+                    <th>Pts</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="thirds-table-body">
+                  <!-- Dynamically populated -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Tab: Matches -->
+      <section id="tab-matches" class="tab-panel">
+        <div class="matches-filter-bar card">
+          <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="match-search" placeholder="Search by team...">
+          </div>
+          <div class="filter-dropdowns">
+            <select id="filter-round">
+              <option value="all">All Rounds</option>
+              <option value="group">Group Stage</option>
+              <option value="r32">Round of 32</option>
+              <option value="r16">Round of 16</option>
+              <option value="qf">Quarter-finals</option>
+              <option value="sf">Semi-finals</option>
+              <option value="final">Finals</option>
+            </select>
+            <select id="filter-group">
+              <option value="all">All Groups</option>
+              <option value="Group A">Group A</option>
+              <option value="Group B">Group B</option>
+              <option value="Group C">Group C</option>
+              <option value="Group D">Group D</option>
+              <option value="Group E">Group E</option>
+              <option value="Group F">Group F</option>
+              <option value="Group G">Group G</option>
+              <option value="Group H">Group H</option>
+              <option value="Group I">Group I</option>
+              <option value="Group J">Group J</option>
+              <option value="Group K">Group K</option>
+              <option value="Group L">Group L</option>
+            </select>
+            <select id="filter-status">
+              <option value="all">All Match Statuses</option>
+              <option value="played">Played (FT)</option>
+              <option value="unplayed">Unplayed</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="matches-list-container" id="matches-list">
+          <!-- Dynamically populated -->
+        </div>
+      </section>
+
+      <!-- Tab: Bracket -->
+      <section id="tab-bracket" class="tab-panel">
+        <div class="bracket-intro">
+          <h2>Tournament Bracket</h2>
+          <p>Track the path of the qualified 32 teams to the Final in New York/New Jersey.</p>
+        </div>
+        
+        <div class="bracket-viewport">
+          <div class="bracket-container" id="bracket-container">
+            <!-- Dynamically populated columns (R32 -> R16 -> QF -> SF -> Final) -->
+          </div>
+        </div>
+      </section>
+
+      <!-- Tab: Predictor -->
+      <section id="tab-predictor" class="tab-panel">
+        <div class="predictor-welcome card">
+          <div class="predictor-welcome-content">
+            <h2>🏆 2026 World Cup Predictor Game</h2>
+            <p>Predict the scores of the remaining 2026 FIFA World Cup matches! See how your predictions change the knockout brackets, update the matchups in real-time, and project who will lift the trophy.</p>
+            <div class="predictor-actions">
+              <button class="btn btn-primary" id="btn-start-predicting">Start Predicting</button>
+              <button class="btn btn-secondary" id="btn-reset-predictions">Reset Predictions</button>
+            </div>
+          </div>
+        </div>
+        
+        <div class="predictor-workspace hidden" id="predictor-workspace">
+          <div class="predictor-grid">
+            <div class="predictor-sidebar card">
+              <h3>Predictor Progress</h3>
+              <div class="predictor-stats">
+                <div class="p-stat-row">
+                  <span>Predicted Matches:</span>
+                  <strong id="pred-stat-count">0 / 22</strong>
+                </div>
+                <div class="p-stat-row">
+                  <span>Your Projected Champion:</span>
+                  <strong id="pred-stat-champion" class="champion-name">None Yet</strong>
+                </div>
+              </div>
+              <div class="predictor-flow-nav">
+                <button class="btn btn-block" id="btn-pred-to-bracket">View Your Projected Bracket</button>
+              </div>
+            </div>
+            
+            <div class="predictor-matches-area">
+              <h3 id="predictor-round-title">Round of 32 Predictions</h3>
+              <div class="predictor-matches-list" id="predictor-matches-list">
+                <!-- Dynamically populated predicting forms -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+      <p>© 2026 SoccerWorldCup.xyz. All data for demonstration and interactive predictor game purposes.</p>
+      <p>Data powered by openfootball community. Built with ❤️ for the beautiful game.</p>
+    </footer>
+
+  </div>
+
+  <!-- Score Predictor Modal -->
+  <div class="modal-overlay" id="predictor-modal">
+    <div class="modal-card">
+      <button class="modal-close-btn" id="modal-close">&times;</button>
+      <h2 id="modal-match-title">Predict Match Score</h2>
+      <p id="modal-match-round" class="modal-round-name">Round of 32</p>
+      
+      <form id="prediction-form" class="prediction-form">
+        <input type="hidden" id="modal-match-num">
+        
+        <div class="modal-teams-vs">
+          <div class="modal-team">
+            <span class="modal-flag" id="modal-flag1">🏳️</span>
+            <label for="modal-score1" id="modal-name1">Team 1</label>
+            <input type="number" id="modal-score1" min="0" required placeholder="0">
+          </div>
+          
+          <div class="modal-vs-divider">VS</div>
+          
+          <div class="modal-team">
+            <span class="modal-flag" id="modal-flag2">🏳️</span>
+            <label for="modal-score2" id="modal-name2">Team 2</label>
+            <input type="number" id="modal-score2" min="0" required placeholder="0">
+          </div>
+        </div>
+        
+        <!-- Extra Time / Penalties options for Knockouts -->
+        <div class="knockout-details hidden" id="modal-knockout-options">
+          <p class="section-title">Knockout Tiebreaker (Required if score is a draw)</p>
+          <div class="tiebreaker-inputs">
+            <div class="form-group checkbox-group">
+              <input type="checkbox" id="modal-et-played">
+              <label for="modal-et-played">Match went to Extra Time?</label>
+            </div>
+            
+            <div class="et-scores hidden" id="modal-et-scores-group">
+              <div class="score-input-pair">
+                <label>Extra Time Score:</label>
+                <div class="inputs-row">
+                  <input type="number" id="modal-et-score1" min="0" placeholder="ET 1">
+                  <span>-</span>
+                  <input type="number" id="modal-et-score2" min="0" placeholder="ET 2">
+                </div>
+              </div>
+            </div>
+            
+            <div class="form-group checkbox-group" id="modal-p-checkbox-group">
+              <input type="checkbox" id="modal-p-played">
+              <label for="modal-p-played">Match went to Penalties?</label>
+            </div>
+            
+            <div class="p-scores hidden" id="modal-p-scores-group">
+              <div class="score-input-pair">
+                <label>Penalty Shootout Winner:</label>
+                <div class="penalty-winner-select">
+                  <button type="button" class="btn btn-outline" id="btn-p-winner1">Team 1</button>
+                  <button type="button" class="btn btn-outline" id="btn-p-winner2">Team 2</button>
+                </div>
+                <div class="inputs-row font-sm" style="margin-top: 10px; justify-content: center; gap: 10px;">
+                  <input type="number" id="modal-p-score1" min="0" placeholder="P1" style="width: 70px;">
+                  <span>-</span>
+                  <input type="number" id="modal-p-score2" min="0" placeholder="P2" style="width: 70px;">
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" id="modal-cancel">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Prediction</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
