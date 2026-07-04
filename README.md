@@ -54,16 +54,5 @@ You do not need to install complex dependencies. You can serve the static files 
 ├── app.js               # Application engine, data handlers, and DOM renderers
 ├── style.css            # Custom CSS variables, light/dark themes, animations
 ├── worldcup.json        # Baseline tournament match fixtures
-├── sitemap.xml          # Search engine optimization index map
-├── robots.txt           # Crawler accessibility directives
 └── CNAME                # Domain routing mapping for GitHub Pages
 ```
-
----
-
-## 🌐 SEO & Indexing
-
-The project is fully configured for indexing and discovery:
-*   Includes `robots.txt` and `sitemap.xml` at the root.
-*   Registered and verified with Google Search Console and Bing Webmaster Tools.
-*   Fully optimized semantic headings and meta tags.
