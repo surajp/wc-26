@@ -1542,3 +1542,236 @@ Let's use clean layout heights to let the user visually trace matchups easily. *
 .font-sm {
   font-size: 0.8rem;
 }
+
+/* Match Details Modal custom styling */
+.details-modal-card {
+  max-width: 550px;
+  padding: 2.2rem 2rem;
+}
+
+.match-details-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.match-num-badge {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  background: var(--bg-gradient);
+  padding: 0.25rem 0.6rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-color);
+}
+
+.details-teams-score-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.details-team-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.5rem;
+}
+
+.details-team-flag {
+  font-size: 3.5rem;
+  line-height: 1;
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.15));
+}
+
+.details-team-name {
+  font-family: var(--font-header);
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--text-main);
+  word-break: break-word;
+}
+
+.details-score-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 140px;
+}
+
+.details-score-nums {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-family: var(--font-header);
+  font-size: 2.8rem;
+  font-weight: 900;
+  color: var(--text-main);
+  line-height: 1;
+}
+
+.details-score-dash {
+  color: var(--text-muted);
+  opacity: 0.5;
+}
+
+.details-score-vs {
+  font-size: 1.5rem;
+  color: var(--text-muted);
+  letter-spacing: 0.1em;
+  font-weight: 700;
+}
+
+.details-score-extra {
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: var(--accent-gold);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-top: 0.5rem;
+}
+
+.details-score-pens {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  margin-top: 0.25rem;
+}
+
+.loser-score {
+  opacity: 0.4;
+}
+
+.details-divider {
+  border: 0;
+  height: 1px;
+  background: var(--border-color);
+  margin: 1.5rem 0;
+}
+
+.details-section {
+  display: flex;
+  flex-direction: column;
+}
+
+.details-section-title {
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 0.75rem;
+}
+
+/* Timeline */
+.details-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.timeline-row {
+  display: grid;
+  grid-template-columns: 1fr 42px 1fr;
+  align-items: center;
+  font-size: 0.85rem;
+}
+
+.timeline-left {
+  text-align: right;
+  padding-right: 0.85rem;
+  color: var(--text-main);
+}
+
+.timeline-center {
+  text-align: center;
+  color: var(--text-main);
+  font-weight: 700;
+  font-size: 0.72rem;
+  background: var(--border-color);
+  padding: 0.15rem 0;
+  border-radius: var(--radius-full);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.timeline-right {
+  text-align: left;
+  padding-left: 0.85rem;
+  color: var(--text-main);
+}
+
+/* Info Grid */
+.details-info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.info-label {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+}
+
+.info-value {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+/* Prediction summary compare card */
+.prediction-summary-card {
+  background: var(--accent-green-soft);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+  align-items: center;
+  text-align: center;
+}
+
+.prediction-details-compare {
+  margin-top: 0.25rem;
+}
+
+.details-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 2rem;
+}
+
+/* Make match-card and match-row-item hover transitions cleaner */
+.match-card {
+  cursor: pointer;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.match-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-lg);
+  border-color: rgba(16, 185, 129, 0.25);
+}
+
+.match-row-item {
+  cursor: pointer;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.match-row-item:hover {
+  transform: scale(1.008) translateX(4px);
+  border-color: rgba(16, 185, 129, 0.2);
+}

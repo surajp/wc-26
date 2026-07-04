@@ -187,7 +187,12 @@ const elements = {
   modalPScore1: document.getElementById('modal-p-score1'),
   modalPScore2: document.getElementById('modal-p-score2'),
   
-  notificationArea: document.getElementById('notification-area')
+  notificationArea: document.getElementById('notification-area'),
+  
+  // Match Details Modal elements
+  detailsModal: document.getElementById('details-modal'),
+  detailsModalClose: document.getElementById('details-modal-close'),
+  detailsModalContent: document.getElementById('details-modal-content')
 };
 
 // Flags helper
@@ -727,7 +732,7 @@ function renderOverviewTab() {
       }
       
       return `
-        <div class="match-row-item">
+        <div class="match-row-item" onclick="openMatchDetails(event, ${m.num})">
           <div class="match-time-col">
             <span class="match-status-badge ${m.score ? 'completed' : ''}">${statusText}</span>
             <span style="font-size: 0.65rem;">Match ${m.num}</span>
@@ -774,7 +779,7 @@ function renderOverviewTab() {
       const dateFormatted = formatDateInWords(m.date);
       
       return `
-        <div class="match-row-item">
+        <div class="match-row-item" onclick="openMatchDetails(event, ${m.num})">
           <div class="match-time-col">
             <span>${dateFormatted}</span>
             <span style="font-size: 0.65rem;">${m.time.split(" ")[0]}</span>
@@ -815,7 +820,7 @@ function renderOverviewTab() {
       else if (info.extraInfo === "Pens") statusText = "Pens";
       
       return `
-        <div class="match-row-item">
+        <div class="match-row-item" onclick="openMatchDetails(event, ${m.num})">
           <div class="match-time-col">
             <span class="match-status-badge completed">${statusText}</span>
             <span style="font-size: 0.65rem;">Match ${m.num}</span>
@@ -1129,7 +1134,7 @@ function renderMatchesList() {
       }
 
       return `
-        <div class="match-card card ${m.isPrediction ? 'live-match-banner' : ''}">
+        <div class="match-card card ${m.isPrediction ? 'live-match-banner' : ''}" onclick="openMatchDetails(event, ${m.num})">
           <div class="match-card-header">
             <span class="round-badge">${m.group || m.round}</span>
             <span>Match ${m.num}</span>
@@ -1229,7 +1234,7 @@ function renderTournamentBracket() {
 
           return `
             <div class="bracket-match-wrapper">
-              <div class="bracket-match-card" style="${cursorStyle}" onclick="${isClickable ? `openPredictor(${m.num})` : ''}">
+              <div class="bracket-match-card" style="cursor: pointer;" onclick="openMatchDetails(event, ${m.num})">
                 <div class="b-match-num">
                   <span>Match ${m.num}</span>
                   <span style="font-size: 0.6rem;">${m.round === 'Match for third place' ? '3rd Place' : formatDateInWords(m.date)}</span>
@@ -1629,13 +1634,206 @@ function setupModalScoreWatcher(isKnockout) {
   });
 }
 
+window.openPredictorFromDetails = function(matchNum) {
+  closeDetailsModal();
+  openPredictor(matchNum);
+};
+
+window.closeDetailsModal = function() {
+  elements.detailsModal.classList.remove('active');
+};
+
+window.openMatchDetails = function(event, matchNum) {
+  // If the user clicked on a button inside the card/row, don't open details
+  if (event && event.target.closest('button')) {
+    return;
+  }
+
+  const m = activeMatches.find(x => x.num === matchNum);
+  if (!m) return;
+
+  const t1 = m.team1_resolved || m.team1;
+  const t2 = m.team2_resolved || m.team2;
+  const flag1 = getFlag(t1);
+  const flag2 = getFlag(t2);
+  const info = getMatchScoreInfo(m);
+  const sc1 = info.score1;
+  const sc2 = info.score2;
+
+  // Build timeline
+  const goals1 = m.goals1 || [];
+  const goals2 = m.goals2 || [];
+  
+  function parseMinute(minStr) {
+    if (typeof minStr === 'number') return minStr;
+    if (!minStr) return 0;
+    const parts = minStr.split('+');
+    return parts.reduce((acc, p) => acc + parseInt(p, 10), 0);
+  }
+
+  const events = [];
+  goals1.forEach(g => {
+    events.push({ team: 1, name: g.name, minute: g.minute, parsedMin: parseMinute(g.minute), penalty: g.penalty, owngoal: g.owngoal });
+  });
+  goals2.forEach(g => {
+    events.push({ team: 2, name: g.name, minute: g.minute, parsedMin: parseMinute(g.minute), penalty: g.penalty, owngoal: g.owngoal });
+  });
+  events.sort((a, b) => a.parsedMin - b.parsedMin);
+
+  let timelineHTML = "";
+  if (events.length > 0) {
+    timelineHTML = `<div class="details-timeline">`;
+    events.forEach(e => {
+      const typeStr = e.penalty ? ' (PEN)' : (e.owngoal ? ' (OG)' : '');
+      const icon = e.owngoal ? '❌' : '⚽';
+      if (e.team === 1) {
+        timelineHTML += `
+          <div class="timeline-row">
+            <div class="timeline-left"><strong>${e.name}</strong>${typeStr} ${icon}</div>
+            <div class="timeline-center">${e.minute}'</div>
+            <div class="timeline-right"></div>
+          </div>
+        `;
+      } else {
+        timelineHTML += `
+          <div class="timeline-row">
+            <div class="timeline-left"></div>
+            <div class="timeline-center">${e.minute}'</div>
+            <div class="timeline-right">${icon} <strong>${e.name}</strong>${typeStr}</div>
+          </div>
+        `;
+      }
+    });
+    timelineHTML += `</div>`;
+  } else {
+    timelineHTML = `<div style="text-align: center; color: var(--text-muted); font-size: 0.85rem; padding: 1.5rem 0;">No goals recorded in this match.</div>`;
+  }
+
+  // Prediction HTML
+  let predictionHTML = "";
+  if (predictions[m.num]) {
+    const p = predictions[m.num];
+    let pExtra = "";
+    if (p.etPlayed) pExtra += " AET";
+    if (p.pPlayed) {
+      const pWinner = p.pWinner === 1 ? t1 : t2;
+      pExtra += ` (${p.p[0]}-${p.p[1]} p - Winner: ${pWinner})`;
+    }
+    predictionHTML = `
+      <hr class="details-divider">
+      <div class="details-section prediction-summary-card">
+        <h3 class="details-section-title" style="color: var(--accent-green)">Your Prediction</h3>
+        <div class="prediction-details-compare">
+          <span style="font-size: 1.1rem; font-weight: 700; color: var(--text-main);">${flag1} ${t1} ${p.ft[0]} - ${p.ft[1]} ${flag2} ${t2}</span>
+          ${pExtra ? `<span style="font-size: 0.85rem; color: var(--accent-gold); font-weight: 600; display: block; margin-top: 4px;">${pExtra}</span>` : ''}
+        </div>
+      </div>
+    `;
+  }
+
+  const modalHTML = `
+    <div class="match-details-header">
+      <span class="round-badge">${m.group || m.round}</span>
+      <span class="match-num-badge">Match ${m.num}</span>
+    </div>
+
+    <div class="details-teams-score-row">
+      <div class="details-team-col">
+        <span class="details-team-flag">${flag1}</span>
+        <span class="details-team-name">${t1}</span>
+      </div>
+      
+      <div class="details-score-col">
+        <div class="details-score-nums">
+          ${m.score ? `
+            <span class="details-score-val ${m.score.ft[0] < m.score.ft[1] ? 'loser-score' : ''}">${sc1}</span>
+            <span class="details-score-dash">-</span>
+            <span class="details-score-val ${m.score.ft[1] < m.score.ft[0] ? 'loser-score' : ''}">${sc2}</span>
+          ` : `
+            <span class="details-score-vs">VS</span>
+          `}
+        </div>
+        ${info.extraInfo ? `<span class="details-score-extra">${info.extraInfo}</span>` : ''}
+        ${info.penaltiesStr ? `<span class="details-score-pens">${info.penaltiesStr}</span>` : ''}
+      </div>
+
+      <div class="details-team-col">
+        <span class="details-team-flag">${flag2}</span>
+        <span class="details-team-name">${t2}</span>
+      </div>
+    </div>
+
+    <hr class="details-divider">
+
+    <div class="details-section">
+      <h3 class="details-section-title">Match Timeline</h3>
+      ${timelineHTML}
+    </div>
+
+    <hr class="details-divider">
+
+    <div class="details-section">
+      <h3 class="details-section-title">Match Information</h3>
+      <div class="details-info-grid">
+        <div class="info-item">
+          <span class="info-label">Date</span>
+          <span class="info-value">📅 ${formatDateInWords(m.date)}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Time</span>
+          <span class="info-value">⏰ ${m.time}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Stadium</span>
+          <span class="info-value">📍 ${m.ground}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">City</span>
+          <span class="info-value">🏙️ ${m.city || 'Host City'}</span>
+        </div>
+      </div>
+    </div>
+
+    ${predictionHTML}
+
+    <div class="details-modal-footer">
+      ${!isMatchOver(m) ? `
+        <button class="btn btn-primary" onclick="openPredictorFromDetails(${m.num})">
+          ${predictions[m.num] ? 'Edit Prediction' : 'Predict Score'}
+        </button>
+      ` : ''}
+      <button class="btn btn-secondary" onclick="closeDetailsModal()">Close</button>
+    </div>
+  `;
+
+  elements.detailsModalContent.innerHTML = modalHTML;
+  elements.detailsModal.classList.add('active');
+};
+
 function setupModalActions() {
   const close = () => {
     elements.predictorModal.classList.remove('active');
   };
 
+  const closeDetails = () => {
+    elements.detailsModal.classList.remove('active');
+  };
+
   elements.modalClose.addEventListener('click', close);
   elements.modalCancel.addEventListener('click', close);
+  
+  elements.detailsModalClose.addEventListener('click', closeDetails);
+  elements.detailsModal.addEventListener('click', (e) => {
+    if (e.target === elements.detailsModal) {
+      closeDetails();
+    }
+  });
+
+  elements.predictorModal.addEventListener('click', (e) => {
+    if (e.target === elements.predictorModal) {
+      close();
+    }
+  });
   
   // Penalty winner toggle buttons
   elements.btnPWinner1.addEventListener('click', () => {
