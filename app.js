@@ -357,16 +357,9 @@ function processAndRender() {
     elements.liveIndicator.style.backgroundColor = "var(--danger-soft)";
     elements.liveIndicator.style.color = "var(--danger)";
     elements.liveIndicator.style.borderColor = "rgba(239, 68, 68, 0.2)";
-  } else if (predictorMode) {
-    elements.liveIndicator.innerText = "● PREDICTOR ACTIVE";
-    elements.liveIndicator.style.backgroundColor = "var(--accent-green-soft)";
-    elements.liveIndicator.style.color = "var(--accent-green)";
-    elements.liveIndicator.style.borderColor = "var(--accent-green)";
+    elements.liveIndicator.style.display = "inline-flex";
   } else {
-    elements.liveIndicator.innerText = "● LIVE DATA SYNCED";
-    elements.liveIndicator.style.backgroundColor = "var(--accent-green-soft)";
-    elements.liveIndicator.style.color = "var(--accent-green)";
-    elements.liveIndicator.style.borderColor = "var(--accent-green)";
+    elements.liveIndicator.style.display = "none";
   }
 
   // 5. Trigger UI render for active tabs
