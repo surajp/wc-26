@@ -1524,6 +1524,72 @@ Let's use clean layout heights to let the user visually trace matchups easily. *
   padding: 4rem 0;
   gap: 1rem;
   color: var(--text-muted);
+  /* Full viewport coverage so exit animation has room */
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  background: var(--bg-primary);
+}
+
+/* Exit: entire loader fades & shrinks away */
+.loading-container.loader-exiting {
+  animation: loaderFadeOut 0.7s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  pointer-events: none;
+}
+
+/* Exit: ball shoots off to the right with a bouncy arc */
+.loading-container.loader-exiting .soccer-ball {
+  animation: ballLaunch 0.65s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards !important;
+}
+
+.loading-container.loader-exiting .ball-shadow {
+  animation: shadowFade 0.4s ease forwards !important;
+}
+
+.loading-container.loader-exiting .loader-text {
+  animation: textFade 0.3s ease forwards !important;
+}
+
+@keyframes ballLaunch {
+  0%   { transform: translateY(0)    rotate(0deg);   opacity: 1; }
+  20%  { transform: translateY(-30px) translateX(40px)  rotate(90deg);  }
+  50%  { transform: translateY(10px)  translateX(120px) rotate(200deg); }
+  70%  { transform: translateY(-15px) translateX(200px) rotate(280deg); }
+  100% { transform: translateY(0)    translateX(110vw) rotate(360deg); opacity: 0.3; }
+}
+
+@keyframes shadowFade {
+  to { transform: scale(0); opacity: 0; }
+}
+
+@keyframes textFade {
+  to { opacity: 0; transform: translateY(8px); }
+}
+
+@keyframes loaderFadeOut {
+  0%   { opacity: 1; }
+  60%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* Page content hidden until reveal */
+.main-content-inner {
+  opacity: 0;
+}
+
+.main-content-inner.page-revealed {
+  animation: pageReveal 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.1s forwards;
+}
+
+@keyframes pageReveal {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .spinner {
@@ -1774,4 +1840,158 @@ Let's use clean layout heights to let the user visually trace matchups easily. *
 .match-row-item:hover {
   transform: scale(1.008) translateX(4px);
   border-color: rgba(16, 185, 129, 0.2);
+}
+
+/* Custom Soccer-themed Animations & Micro-Interactions */
+
+/* 1. Bouncing Soccer Ball Loader */
+.soccer-loader {
+  position: relative;
+  width: 60px;
+  height: 80px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  margin-bottom: 0.5rem;
+}
+
+.soccer-ball {
+  font-size: 2.8rem;
+  line-height: 1;
+  animation: ballBounce 0.6s infinite alternate cubic-bezier(0.45, 0.05, 0.55, 0.95);
+  z-index: 2;
+}
+
+.ball-shadow {
+  width: 32px;
+  height: 8px;
+  background: rgba(16, 185, 129, 0.15);
+  border-radius: 50%;
+  animation: shadowScale 0.6s infinite alternate cubic-bezier(0.45, 0.05, 0.55, 0.95);
+  filter: blur(1px);
+  z-index: 1;
+}
+
+@keyframes ballBounce {
+  0% {
+    transform: translateY(-40px) rotate(0deg);
+  }
+  100% {
+    transform: translateY(0) rotate(360deg);
+  }
+}
+
+@keyframes shadowScale {
+  0% {
+    transform: scale(0.3);
+    background: rgba(16, 185, 129, 0.05);
+  }
+  100% {
+    transform: scale(1.1);
+    background: rgba(16, 185, 129, 0.35);
+  }
+}
+
+.loader-text {
+  font-family: var(--font-header);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+  color: var(--accent-green);
+  animation: pulse 1.5s infinite ease-in-out;
+}
+
+/* 2. Page Tab Fade & Slide-In Transitions */
+.tab-panel {
+  display: none;
+  animation: tabSlideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.tab-panel.active {
+  display: block;
+}
+
+@keyframes tabSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 3. Interactive Goal Scorer Hover Roll */
+.scorer-list div {
+  transition: all 0.25s ease;
+}
+
+.scorer-list div:hover {
+  transform: translateX(6px);
+  color: var(--accent-gold);
+}
+
+.timeline-row {
+  transition: all 0.25s ease;
+}
+
+.timeline-row:hover {
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: var(--radius-sm);
+}
+
+.timeline-row:hover .timeline-center {
+  background: var(--accent-green-soft);
+  color: var(--accent-green);
+  border-color: rgba(16, 185, 129, 0.2);
+  transform: scale(1.1);
+}
+
+.timeline-left:hover, .timeline-right:hover {
+  color: var(--accent-gold);
+}
+
+/* 4. Trophy Icon Spin & Pop */
+.trophy-icon {
+  font-size: 2.8rem;
+  filter: drop-shadow(0 0 10px rgba(245, 158, 11, 0.4));
+  transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  cursor: pointer;
+}
+
+.trophy-icon:hover {
+  transform: scale(1.2) rotate(15deg);
+}
+
+/* 5. Predict Button Soccer Ball 'Shot' Hover */
+.btn-predict {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btn-predict::after {
+  content: '⚽';
+  position: absolute;
+  left: -20px;
+  top: 50%;
+  transform: translateY(-50%) rotate(0);
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  opacity: 0;
+  font-size: 0.85rem;
+}
+
+.btn-predict:hover {
+  padding-left: 1.6rem;
+  border-color: var(--accent-green);
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.25);
+}
+
+.btn-predict:hover::after {
+  left: 8px;
+  opacity: 1;
+  transform: translateY(-50%) rotate(360deg);
 }

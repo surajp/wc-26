@@ -279,21 +279,42 @@ function setupTheme() {
 // Data Fetch & Bracket Resolver Engine
 // -------------------------------------------------------------
 function fetchTournamentData() {
-  fetch('worldcup.json')
+  const MIN_LOADER_MS = 2000;
+
+  const dataPromise = fetch('worldcup.json')
     .then(res => res.json())
     .then(data => {
       // Ensure all matches have a unique 'num' identifier (missing for matches 1-72 in json)
       data.matches.forEach((m, idx) => {
         m.num = m.num || (idx + 1);
       });
+      return data;
+    });
+
+  const timerPromise = new Promise(resolve => setTimeout(resolve, MIN_LOADER_MS));
+
+  Promise.all([dataPromise, timerPromise])
+    .then(([data]) => {
       baseMatches = data.matches;
-      elements.loading.classList.add('hidden');
-      
+
       processAndRender();
-      
+
       // Pull remote live scores immediately on load and then sync every 60s
       fetchRemoteUpdates();
       setInterval(fetchRemoteUpdates, 60000);
+
+      // --- Animated exit sequence ---
+      // Step 1: trigger ball-launch + loader fade-out animation
+      elements.loading.classList.add('loader-exiting');
+
+      // Step 2: after animation completes (700ms), hide loader entirely
+      setTimeout(() => {
+        elements.loading.classList.add('hidden');
+
+        // Step 3: reveal the page content with a smooth slide-up
+        const inner = document.getElementById('main-content-inner');
+        if (inner) inner.classList.add('page-revealed');
+      }, 700);
     })
     .catch(err => {
       console.error("Error loading tournament data", err);

@@ -97,9 +97,15 @@
       
       <!-- Loading Spinner -->
       <div id="loading" class="loading-container">
-        <div class="spinner"></div>
-        <p>Fetching World Cup Data...</p>
+        <div class="soccer-loader">
+          <div class="soccer-ball">⚽</div>
+          <div class="ball-shadow"></div>
+        </div>
+        <p class="loader-text">Kickoff Impending...</p>
       </div>
+
+      <!-- All tab content wrapped for page-reveal animation -->
+      <div id="main-content-inner" class="main-content-inner">
 
       <!-- Tab: Overview -->
       <section id="tab-overview" class="tab-panel active">
@@ -288,6 +294,8 @@
           </div>
         </div>
       </section>
+
+      </div><!-- /main-content-inner -->
 
     </main>
 
