@@ -71,19 +71,21 @@ function parseMatchDateTime(dateStr, timeStr) {
 
 function getActiveLiveMatch() {
   const now = Date.now();
-  // Find a match that is currently in progress
-  return activeMatches.find(m => {
-    if (m.isPrediction) return false;
-    // If the match has an official score, it is finished!
-    if (m.score) return false;
-    
+  // Check liveness against baseMatches (never mutated by predictions).
+  // A live match is one that: has NO official score yet, started recently,
+  // and hasn't exceeded its expected duration.
+  const liveBase = baseMatches.find(m => {
+    if (m.score) return false; // Official score recorded → finished
     const kickoffMs = parseMatchDateTime(m.date, m.time).getTime();
     if (isNaN(kickoffMs)) return false;
     const elapsedMs = now - kickoffMs;
     const isKnockout = !m.group;
-    const durationMs = (isKnockout ? 135 : 120) * 60000; // 135 minutes for knockouts (covering ET+shootout), 120 for groups
+    const durationMs = (isKnockout ? 135 : 120) * 60000;
     return elapsedMs >= 0 && elapsedMs <= durationMs;
   });
+  if (!liveBase) return null;
+  // Return the activeMatches copy so callers get any enriched fields (team resolution etc.)
+  return activeMatches.find(m => m.num === liveBase.num) || liveBase;
 }
 
 function getMatchMinute(match) {
