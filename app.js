@@ -1546,7 +1546,7 @@ window.openPredictor = function(matchNum) {
 
   const t1 = match.team1_resolved || match.team1;
   const t2 = match.team2_resolved || match.team2;
-  
+
   // Set modal details
   elements.modalMatchNum.value = matchNum;
   elements.modalMatchTitle.innerText = `${t1} vs ${t2}`;
@@ -1557,6 +1557,36 @@ window.openPredictor = function(matchNum) {
   elements.modalName2.innerText = t2;
   elements.btnPWinner1.innerText = t1;
   elements.btnPWinner2.innerText = t2;
+
+  // Show actual score banner if the base match has a real result
+  const baseMatch = baseMatches.find(m => m.num === matchNum);
+  const actualScoreBanner = document.getElementById('modal-actual-score');
+  if (baseMatch && baseMatch.score && baseMatch.score.ft && !baseMatch.isPrediction) {
+    const info = getMatchScoreInfo(baseMatch);
+    let extraStr = '';
+    if (baseMatch.score.et) extraStr += ' (AET)';
+    if (baseMatch.score.p) {
+      const pw = baseMatch.score.p[0] > baseMatch.score.p[1] ? t1 : t2;
+      extraStr += ` · ${baseMatch.score.p[0]}-${baseMatch.score.p[1]} pens (${pw} wins)`;
+    }
+    actualScoreBanner.innerHTML = `
+      <div class="actual-score-row">
+        <span class="actual-score-label">⚽ Actual</span>
+        <span class="actual-score-value">${info.score1} – ${info.score2}${extraStr}</span>
+      </div>`;
+    actualScoreBanner.classList.remove('hidden');
+  } else {
+    actualScoreBanner.innerHTML = '';
+    actualScoreBanner.classList.add('hidden');
+  }
+
+  // Show / hide Remove Prediction button
+  const removeBtn = document.getElementById('modal-remove-pred');
+  if (predictions[matchNum]) {
+    removeBtn.classList.remove('hidden');
+  } else {
+    removeBtn.classList.add('hidden');
+  }
 
   // Initialize input fields based on existing prediction or base match score
   const pred = predictions[matchNum];
@@ -1658,6 +1688,19 @@ function setupModalScoreWatcher(isKnockout) {
     }
   });
 }
+
+window.removePrediction = function(matchNum) {
+  delete predictions[matchNum];
+  savePredictions();
+  // If no predictions remain, exit predictor mode
+  if (Object.keys(predictions).length === 0) {
+    predictorMode = false;
+    updatePredictorUIState();
+  }
+  elements.predictorModal.classList.remove('active');
+  processAndRender();
+  showNotification('Prediction Removed', `Prediction for Match ${matchNum} has been cleared.`);
+};
 
 window.openPredictorFromDetails = function(matchNum) {
   closeDetailsModal();

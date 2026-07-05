@@ -313,7 +313,10 @@
       <button class="modal-close-btn" id="modal-close">&times;</button>
       <h2 id="modal-match-title">Predict Match Score</h2>
       <p id="modal-match-round" class="modal-round-name">Round of 32</p>
-      
+
+      <!-- Actual score banner (shown only when real result exists) -->
+      <div id="modal-actual-score" class="hidden"></div>
+
       <form id="prediction-form" class="prediction-form">
         <input type="hidden" id="modal-match-num">
         
@@ -376,8 +379,14 @@
         </div>
 
         <div class="modal-actions">
-          <button type="button" class="btn btn-secondary" id="modal-cancel">Cancel</button>
-          <button type="submit" class="btn btn-primary">Save Prediction</button>
+          <button type="button" class="btn btn-danger btn-remove-pred hidden" id="modal-remove-pred"
+            onclick="removePrediction(+document.getElementById('modal-match-num').value)">
+            🗑 Remove Prediction
+          </button>
+          <div class="modal-actions-right">
+            <button type="button" class="btn btn-secondary" id="modal-cancel">Cancel</button>
+            <button type="submit" class="btn btn-primary">Save Prediction</button>
+          </div>
         </div>
       </form>
     </div>
