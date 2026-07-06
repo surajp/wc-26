@@ -674,9 +674,10 @@ function renderOverviewTab() {
     const flag2 = getFlag(t2);
     const minuteStr = getMatchMinute(liveMatch);
     
-    const info = getMatchScoreInfo(liveMatch);
-    const sc1 = liveMatch.score ? info.score1 : 0;
-    const sc2 = liveMatch.score ? info.score2 : 0;
+    const baseMatch = baseMatches.find(bm => bm.num === liveMatch.num) || liveMatch;
+    const info = getMatchScoreInfo(baseMatch);
+    const sc1 = baseMatch.score ? info.score1 : 0;
+    const sc2 = baseMatch.score ? info.score2 : 0;
     
     let bannerHTML = `
       <div class="live-match-header">
