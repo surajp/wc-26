@@ -820,16 +820,15 @@ function renderOverviewTab() {
             </div>
             ${info.penaltiesStr ? `<div style="font-size: 0.7rem; color: var(--accent-gold); font-weight: 600; text-align: right; margin-top: 2px;">${info.penaltiesStr}</div>` : ''}
           </div>
-          <div class="match-action-col">
-            ${isMatchOver(m) ? `
-              ${predictions[m.num] ? `
-                <span style="font-size: 0.7rem; color: var(--accent-gold); font-weight: 600; border: 1px dashed rgba(245, 158, 11, 0.35); padding: 0.15rem 0.35rem; border-radius: var(--radius-sm)">
-                  Pred: ${predictions[m.num].ft[0]}-${predictions[m.num].ft[1]}
-                </span>
-              ` : ''}
-            ` : `
+          <div class="match-action-col" style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px;">
+            ${predictions[m.num] ? `
+              <span style="font-size: 0.7rem; color: var(--accent-gold); font-weight: 600; border: 1px dashed rgba(245, 158, 11, 0.35); padding: 0.15rem 0.35rem; border-radius: var(--radius-sm); display: inline-block;">
+                Pred: ${predictions[m.num].ft[0]}-${predictions[m.num].ft[1]}
+              </span>
+            ` : ''}
+            ${isMatchOver(m) ? '' : `
               <button class="btn-predict" onclick="openPredictor(${m.num})">
-                ${predictions[m.num] ? 'Edit Pred' : 'Predict'}
+                ${predictions[m.num] ? 'Edit' : 'Predict'}
               </button>
             `}
           </div>
@@ -1257,20 +1256,20 @@ function renderMatchesList() {
           <div class="match-card-footer">
             <span>📅 ${formatDateInWords(m.date)} • ${m.time.split(" ")[0]}</span>
             <span class="ground-name" title="${m.ground}">📍 ${m.ground.split(" (")[0]}</span>
-            ${!isMatchOver(m) ? `
-              <button class="btn-predict" onclick="openPredictor(${m.num})">
-                ${predictions[m.num] || m.isPrediction ? 'Edit Pred' : 'Predict'}
-              </button>
-            ` : `
-              <div style="display: flex; align-items: center; gap: 0.5rem;">
-                ${predictions[m.num] ? `
-                  <span class="status-indicator" style="background: rgba(245, 158, 11, 0.12); color: var(--accent-gold); border: 1px solid rgba(245, 158, 11, 0.2); font-size: 0.7rem; font-weight: 600; padding: 0.15rem 0.4rem; border-radius: var(--radius-sm)">
-                    Pred: ${predictions[m.num].ft[0]}-${predictions[m.num].ft[1]}
-                  </span>
-                ` : ''}
+            <div style="display: flex; align-items: center; gap: 0.5rem; margin-left: auto;">
+              ${predictions[m.num] ? `
+                <span class="status-indicator" style="background: rgba(245, 158, 11, 0.12); color: var(--accent-gold); border: 1px solid rgba(245, 158, 11, 0.2); font-size: 0.7rem; font-weight: 600; padding: 0.15rem 0.4rem; border-radius: var(--radius-sm)">
+                  Pred: ${predictions[m.num].ft[0]}-${predictions[m.num].ft[1]}
+                </span>
+              ` : ''}
+              ${!isMatchOver(m) ? `
+                <button class="btn-predict" onclick="openPredictor(${m.num})">
+                  ${predictions[m.num] ? 'Edit' : 'Predict'}
+                </button>
+              ` : `
                 <span class="status-indicator q" style="background: transparent; color: var(--text-muted); font-size: 0.75rem">${statusLabel}</span>
-              </div>
-            `}
+              `}
+            </div>
           </div>
         </div>
       `;
