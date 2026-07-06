@@ -100,6 +100,114 @@ function isMatchCurrentlyLive(match) {
   return elapsedMs >= 0 && elapsedMs <= durationMs;
 }
 
+function getMatchCardHTML(m) {
+  const t1 = m.team1_resolved || m.team1;
+  const t2 = m.team2_resolved || m.team2;
+  const flag1 = getFlag(t1);
+  const flag2 = getFlag(t2);
+  
+  const info = getMatchScoreInfo(m);
+  const isLive = isMatchCurrentlyLive(m);
+  const sc1 = isLive ? (info.score1 !== "" ? info.score1 : 0) : (m.score ? info.score1 : "");
+  const sc2 = isLive ? (info.score2 !== "" ? info.score2 : 0) : (m.score ? info.score2 : "");
+  const winner1Class = info.winnerId === 'team1' ? 'winner' : '';
+  const winner2Class = info.winnerId === 'team2' ? 'winner' : '';
+  
+  let pDisplay = "";
+  if (info.penaltiesStr) {
+    pDisplay = `<div style="font-size: 0.75rem; color: var(--accent-gold); font-weight: 600; margin-top: 2px;">
+      ${info.penaltiesStr.replace('p)', 'Pens)')}
+    </div>`;
+  } else if (info.extraInfo === "AET") {
+    pDisplay = `<div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600; margin-top: 2px;">
+      (After Extra Time)
+    </div>`;
+  }
+  
+  let scorerDisplay = "";
+  if (m.goals1 && (m.goals1.length > 0 || m.goals2.length > 0)) {
+    scorerDisplay = `
+      <div class="match-scorers">
+        <div class="scorer-list">
+          ${m.goals1.map(g => `<div>⚽ ${g.name} ${g.minute}'</div>`).join('')}
+          ${m.goals2.map(g => `<div>⚽ ${g.name} ${g.minute}'</div>`).join('')}
+        </div>
+      </div>
+    `;
+  }
+
+  let statusLabel = "FT";
+  if (m.isPrediction) {
+    statusLabel = "PRED";
+  } else if (m.score) {
+    if (info.extraInfo === "AET") statusLabel = "AET";
+    else if (info.extraInfo === "Pens") statusLabel = "Pens";
+  }
+
+  const t1Placeholder = t1.startsWith('W') || t1.startsWith('L');
+  const t2Placeholder = t2.startsWith('W') || t2.startsWith('L');
+  const disabledClass = (t1Placeholder || t2Placeholder) ? 'disabled' : '';
+
+  // Header prediction badge
+  const predictionTagHTML = m.isPrediction ? '<span class="prediction-tag" style="font-size: 0.6rem; padding: 0.1rem 0.35rem; margin-right: 0.4rem;">PREDICTION</span>' : '';
+  
+  return `
+    <div class="match-card card ${disabledClass} ${m.isPrediction ? 'predicted-card' : ''}" onclick="openMatchDetails(event, ${m.num})">
+      <div class="match-card-header">
+        <span class="round-badge">${m.group || m.round}</span>
+        <span style="display: flex; align-items: center;">
+          ${predictionTagHTML}
+          <span>Match ${m.num}</span>
+        </span>
+      </div>
+      
+      <div class="match-card-body">
+        <div class="m-team-row ${winner1Class}">
+          <div class="m-flag-name">
+            <span class="m-flag">${flag1}</span>
+            <span>${t1}</span>
+          </div>
+          <span class="m-score ${m.isPrediction ? 'predicted-score-value' : ''}">${sc1 !== undefined && sc1 !== "" ? sc1 : (m.score || isLive ? 0 : "")}</span>
+        </div>
+        
+        <div class="m-team-row ${winner2Class}">
+          <div class="m-flag-name">
+            <span class="m-flag">${flag2}</span>
+            <span>${t2}</span>
+          </div>
+          <span class="m-score ${m.isPrediction ? 'predicted-score-value' : ''}">${sc2 !== undefined && sc2 !== "" ? sc2 : (m.score || isLive ? 0 : "")}</span>
+        </div>
+        ${m.isPrediction ? `<div class="predicted-scores-sublabel">🔮 Predicted Scoreline</div>` : ''}
+        ${pDisplay}
+        ${scorerDisplay}
+      </div>
+      
+      <div class="match-card-footer" style="margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; flex-wrap: wrap;">
+        <span style="font-size: 0.7rem; color: var(--text-muted)">📅 ${formatDateInWords(m.date)} • 📍 ${m.ground.split(" (")[0]}</span>
+        
+        <div style="display: flex; align-items: center; gap: 0.5rem; margin-left: auto;">
+          ${predictions[m.num] ? `
+            <span class="status-indicator" style="background: rgba(245, 158, 11, 0.12); color: var(--accent-gold); border: 1px solid rgba(245, 158, 11, 0.2); font-size: 0.7rem; font-weight: 600; padding: 0.15rem 0.4rem; border-radius: var(--radius-sm)">
+              Pred: ${predictions[m.num].ft[0]}-${predictions[m.num].ft[1]}
+            </span>
+          ` : ''}
+          
+          ${t1Placeholder || t2Placeholder ? `
+            <span style="font-size: 0.75rem; color: var(--text-muted); font-style: italic;">Awaiting teams...</span>
+          ` : (isMatchOver(m) ? `
+            <span class="status-indicator q" style="background: transparent; color: var(--text-muted); font-size: 0.75rem">${statusLabel}</span>
+          ` : `
+            <button class="btn-predict" onclick="openPredictor(${m.num})">
+              ${predictions[m.num] ? 'Edit' : 'Predict'}
+            </button>
+          `)}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+
 
 function getMatchMinute(match) {
   const now = Date.now();
@@ -781,67 +889,17 @@ function renderOverviewTab() {
   }
 
   const todaysMatches = activeMatches.filter(m => m.date === todayStr);
-  
   let todaysHTML = "";
   if (todaysMatches.length > 0) {
-    todaysHTML = todaysMatches.map(m => {
-      const t1 = m.team1_resolved || m.team1;
-      const t2 = m.team2_resolved || m.team2;
-      const flag1 = getFlag(t1);
-      const flag2 = getFlag(t2);
-      const isMatchLive = isMatchCurrentlyLive(m);
-      
-      const info = getMatchScoreInfo(m);
-      const sc1 = isMatchLive ? (info.score1 !== "" ? info.score1 : 0) : (m.score ? info.score1 : "");
-      const sc2 = isMatchLive ? (info.score2 !== "" ? info.score2 : 0) : (m.score ? info.score2 : "");
-      const winner1Class = info.winnerId === 'team1' ? 'winner' : '';
-      const winner2Class = info.winnerId === 'team2' ? 'winner' : '';
-      
-      let statusText = isMatchLive ? `${getMatchMinute(m)} (LIVE)` : (m.score ? "FT" : m.time.split(" ")[0]);
-      if (m.score && !isMatchLive) {
-        if (info.extraInfo === "AET") statusText = "AET";
-        else if (info.extraInfo === "Pens") statusText = "Pens";
-      }
-      
-      return `
-        <div class="match-row-item" onclick="openMatchDetails(event, ${m.num})">
-          <div class="match-time-col">
-            <span class="match-status-badge ${m.score ? 'completed' : ''}">${statusText}</span>
-            <span style="font-size: 0.65rem;">Match ${m.num}</span>
-          </div>
-          <div class="match-teams-col">
-            <div class="match-team-row ${winner1Class}">
-              <div class="match-team-name-flag"><span>${flag1}</span> ${t1}</div>
-              <span class="match-score-num">${sc1}</span>
-            </div>
-            <div class="match-team-row ${winner2Class}">
-              <div class="match-team-name-flag"><span>${flag2}</span> ${t2}</div>
-              <span class="match-score-num">${sc2}</span>
-            </div>
-            ${info.penaltiesStr ? `<div style="font-size: 0.7rem; color: var(--accent-gold); font-weight: 600; text-align: right; margin-top: 2px;">${info.penaltiesStr}</div>` : ''}
-          </div>
-          <div class="match-action-col" style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px;">
-            ${predictions[m.num] ? `
-              <span style="font-size: 0.7rem; color: var(--accent-gold); font-weight: 600; border: 1px dashed rgba(245, 158, 11, 0.35); padding: 0.15rem 0.35rem; border-radius: var(--radius-sm); display: inline-block;">
-                Pred: ${predictions[m.num].ft[0]}-${predictions[m.num].ft[1]}
-              </span>
-            ` : ''}
-            ${isMatchOver(m) ? '' : `
-              <button class="btn-predict" onclick="openPredictor(${m.num})">
-                ${predictions[m.num] ? 'Edit' : 'Predict'}
-              </button>
-            `}
-          </div>
-        </div>
-      `;
-    }).join('');
+    todaysHTML = todaysMatches.map(getMatchCardHTML).join('');
   } else {
-    todaysHTML = `<p style="color: var(--text-muted); text-align: center;">No matches scheduled for today.</p>`;
+    todaysHTML = `<p style="color: var(--text-muted); text-align: center; width: 100%; grid-column: 1/-1;">No matches scheduled for today.</p>`;
   }
   elements.todaysMatchesList.innerHTML = todaysHTML;
 
+  // C. Upcoming Matches (excluding active live or completed matches)
   const upcomingMatches = activeMatches
-    .filter(m => !m.score)
+    .filter(m => !isMatchCurrentlyLive(m) && !isMatchOver(m))
     .sort((a, b) => {
       const timeA = parseMatchDateTime(a.date, a.time).getTime();
       const timeB = parseMatchDateTime(b.date, b.time).getTime();
@@ -850,83 +908,19 @@ function renderOverviewTab() {
     .slice(0, 4);
   let upcomingHTML = "";
   if (upcomingMatches.length > 0) {
-    upcomingHTML = upcomingMatches.map(m => {
-      const flag1 = getFlag(m.team1_resolved);
-      const flag2 = getFlag(m.team2_resolved);
-      const dateFormatted = formatDateInWords(m.date);
-      
-      return `
-        <div class="match-row-item" onclick="openMatchDetails(event, ${m.num})">
-          <div class="match-time-col">
-            <span>${dateFormatted}</span>
-            <span style="font-size: 0.65rem;">${m.time.split(" ")[0]}</span>
-          </div>
-          <div class="match-teams-col">
-            <div class="match-team-row">
-              <div class="match-team-name-flag"><span>${flag1}</span> ${m.team1_resolved}</div>
-            </div>
-            <div class="match-team-row">
-              <div class="match-team-name-flag"><span>${flag2}</span> ${m.team2_resolved}</div>
-            </div>
-          </div>
-          <div class="match-action-col">
-            <button class="btn-predict" onclick="openPredictor(${m.num})">Predict</button>
-          </div>
-        </div>
-      `;
-    }).join('');
+    upcomingHTML = upcomingMatches.map(getMatchCardHTML).join('');
   } else {
-    upcomingHTML = `<p style="color: var(--text-muted); text-align: center;">No more upcoming matches. Final is near!</p>`;
+    upcomingHTML = `<p style="color: var(--text-muted); text-align: center; width: 100%; grid-column: 1/-1;">No more upcoming matches. Final is near!</p>`;
   }
   elements.upcomingMatchesList.innerHTML = upcomingHTML;
 
-  // D. Recent Results
-  // Pull 4 matches that finished recently (completed matches, sorting descending by date/num)
-  const recentMatches = activeMatches.filter(m => m.score).reverse().slice(0, 4);
+  // D. Recent Results (only matches that are truly completed in real life)
+  const recentMatches = activeMatches.filter(isMatchOver).reverse().slice(0, 4);
   let recentHTML = "";
   if (recentMatches.length > 0) {
-    recentHTML = recentMatches.map(m => {
-      const t1 = m.team1_resolved || m.team1;
-      const t2 = m.team2_resolved || m.team2;
-      const flag1 = getFlag(t1);
-      const flag2 = getFlag(t2);
-      const info = getMatchScoreInfo(m);
-      const winner1Class = info.winnerId === 'team1' ? 'winner' : '';
-      const winner2Class = info.winnerId === 'team2' ? 'winner' : '';
-      
-      let statusText = "FT";
-      if (info.extraInfo === "AET") statusText = "AET";
-      else if (info.extraInfo === "Pens") statusText = "Pens";
-      
-      return `
-        <div class="match-row-item" onclick="openMatchDetails(event, ${m.num})">
-          <div class="match-time-col">
-            <span class="match-status-badge completed">${statusText}</span>
-            <span style="font-size: 0.65rem;">Match ${m.num}</span>
-          </div>
-          <div class="match-teams-col">
-            <div class="match-team-row ${winner1Class}">
-              <div class="match-team-name-flag"><span>${flag1}</span> ${t1}</div>
-              <span class="match-score-num">${info.score1}</span>
-            </div>
-            <div class="match-team-row ${winner2Class}">
-              <div class="match-team-name-flag"><span>${flag2}</span> ${t2}</div>
-              <span class="match-score-num">${info.score2}</span>
-            </div>
-            ${info.penaltiesStr ? `<div style="font-size: 0.7rem; color: var(--accent-gold); font-weight: 600; text-align: right; margin-top: 2px;">${info.penaltiesStr}</div>` : ''}
-          </div>
-          ${predictions[m.num] ? `
-            <div class="match-action-col">
-              <span style="font-size: 0.7rem; color: var(--accent-gold); font-weight: 600; border: 1px dashed rgba(245, 158, 11, 0.35); padding: 0.15rem 0.35rem; border-radius: var(--radius-sm)">
-                Pred: ${predictions[m.num].ft[0]}-${predictions[m.num].ft[1]}
-              </span>
-            </div>
-          ` : ''}
-        </div>
-      `;
-    }).join('');
+    recentHTML = recentMatches.map(getMatchCardHTML).join('');
   } else {
-    recentHTML = `<p style="color: var(--text-muted); text-align: center;">No recent results.</p>`;
+    recentHTML = `<p style="color: var(--text-muted); text-align: center; width: 100%; grid-column: 1/-1;">No recent results.</p>`;
   }
   elements.recentResultsList.innerHTML = recentHTML;
 }
@@ -1177,103 +1171,7 @@ function renderMatchesList() {
   
   let matchesHTML = "";
   if (filtered.length > 0) {
-    matchesHTML = filtered.map(m => {
-      const flag1 = getFlag(m.team1_resolved || m.team1);
-      const flag2 = getFlag(m.team2_resolved || m.team2);
-      
-      const t1 = m.team1_resolved || m.team1;
-      const t2 = m.team2_resolved || m.team2;
-      
-      const info = getMatchScoreInfo(m);
-      const isLive = isMatchCurrentlyLive(m);
-      const sc1 = isLive ? (info.score1 !== "" ? info.score1 : 0) : (m.score ? info.score1 : "");
-      const sc2 = isLive ? (info.score2 !== "" ? info.score2 : 0) : (m.score ? info.score2 : "");
-      const winner1Class = info.winnerId === 'team1' ? 'winner' : '';
-      const winner2Class = info.winnerId === 'team2' ? 'winner' : '';
-      
-      let pDisplay = "";
-      if (info.penaltiesStr) {
-        pDisplay = `<div style="font-size: 0.75rem; color: var(--accent-gold); font-weight: 600; margin-top: 2px;">
-          ${info.penaltiesStr.replace('p)', 'Pens)')}
-        </div>`;
-      } else if (info.extraInfo === "AET") {
-        pDisplay = `<div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600; margin-top: 2px;">
-          (After Extra Time)
-        </div>`;
-      }
-      
-      let scorerDisplay = "";
-      if (m.goals1 && (m.goals1.length > 0 || m.goals2.length > 0)) {
-        scorerDisplay = `
-          <div class="match-scorers">
-            <div class="scorer-list">
-              ${m.goals1.map(g => `<div>⚽ ${g.name} ${g.minute}'</div>`).join('')}
-              ${m.goals2.map(g => `<div>⚽ ${g.name} ${g.minute}'</div>`).join('')}
-            </div>
-          </div>
-        `;
-      }
-
-      let statusLabel = "FT";
-      if (m.isPrediction) {
-        statusLabel = "PRED";
-      } else if (m.score) {
-        if (info.extraInfo === "AET") statusLabel = "AET";
-        else if (info.extraInfo === "Pens") statusLabel = "Pens";
-      }
-
-      return `
-        <div class="match-card card ${m.isPrediction ? 'predicted-card' : ''}" onclick="openMatchDetails(event, ${m.num})">
-          <div class="match-card-header">
-            <span class="round-badge">${m.group || m.round}</span>
-            <span style="display: flex; align-items: center;">
-              ${m.isPrediction ? '<span class="prediction-tag" style="font-size: 0.6rem; padding: 0.1rem 0.35rem; margin-right: 0.4rem;">PREDICTION</span>' : ''}
-              <span>Match ${m.num}</span>
-            </span>
-          </div>
-          
-          <div class="match-card-body">
-            <div class="m-team-row ${winner1Class}">
-              <div class="m-flag-name">
-                <span class="m-flag">${flag1}</span>
-                <span>${t1}</span>
-              </div>
-              <span class="m-score ${m.isPrediction ? 'predicted-score-value' : ''}">${sc1 !== "" ? sc1 : ""}</span>
-            </div>
-            
-            <div class="m-team-row ${winner2Class}">
-              <div class="m-flag-name">
-                <span class="m-flag">${flag2}</span>
-                <span>${t2}</span>
-              </div>
-              <span class="m-score ${m.isPrediction ? 'predicted-score-value' : ''}">${sc2 !== "" ? sc2 : ""}</span>
-            </div>
-            ${m.isPrediction ? `<div class="predicted-scores-sublabel">🔮 Predicted Scoreline</div>` : ''}
-            ${pDisplay}
-            ${scorerDisplay}
-          </div>
-          
-          <div class="match-card-footer">
-            <span>📅 ${formatDateInWords(m.date)} • ${m.time.split(" ")[0]}</span>
-            <span class="ground-name" title="${m.ground}">📍 ${m.ground.split(" (")[0]}</span>
-            <div style="display: flex; align-items: center; gap: 0.5rem; margin-left: auto;">
-              ${predictions[m.num] ? `
-                <span class="status-indicator" style="background: rgba(245, 158, 11, 0.12); color: var(--accent-gold); border: 1px solid rgba(245, 158, 11, 0.2); font-size: 0.7rem; font-weight: 600; padding: 0.15rem 0.4rem; border-radius: var(--radius-sm)">
-                  Pred: ${predictions[m.num].ft[0]}-${predictions[m.num].ft[1]}
-                </span>
-              ` : ''}
-              ${!isMatchOver(m) ? `
-                <button class="btn-predict" onclick="openPredictor(${m.num})">
-                  ${predictions[m.num] ? 'Edit' : 'Predict'}
-                </button>
-              ` : `
-                <span class="status-indicator q" style="background: transparent; color: var(--text-muted); font-size: 0.75rem">${statusLabel}</span>
-              `}
-            </div>
-          </div>
-        </div>
-      `;
-    }).join('');
+    matchesHTML = filtered.map(getMatchCardHTML).join('');
   } else {
     matchesHTML = `
       <div style="grid-column: 1/-1; text-align: center; padding: 3rem; color: var(--text-muted);">
@@ -1448,75 +1346,7 @@ function updatePredictorUIState() {
   }
 }
 
-// Helper to render HTML for a predictor match card
-function getPredictorMatchCardHTML(m) {
-  const t1 = m.team1_resolved || m.team1;
-  const t2 = m.team2_resolved || m.team2;
-  const flag1 = getFlag(t1);
-  const flag2 = getFlag(t2);
-  
-  const hasPred = !!predictions[m.num];
-  const info = getMatchScoreInfo(m);
-  
-  const sc1 = m.score ? info.score1 : "";
-  const sc2 = m.score ? info.score2 : "";
-  
-  const winner1Class = info.winnerId === 'team1' ? 'winner' : '';
-  const winner2Class = info.winnerId === 'team2' ? 'winner' : '';
-  
-  let pDisplay = "";
-  if (info.penaltiesStr) {
-    pDisplay = `<div style="color: var(--accent-gold); font-size: 0.75rem; font-weight: 600;">
-      ${info.penaltiesStr.replace('p)', 'Pens)')}
-    </div>`;
-  } else if (info.extraInfo === "AET") {
-    pDisplay = `<div style="color: var(--text-muted); font-size: 0.75rem; font-weight: 600;">
-      (After Extra Time)
-    </div>`;
-  }
 
-  const t1Placeholder = t1.startsWith('W') || t1.startsWith('L');
-  const t2Placeholder = t2.startsWith('W') || t2.startsWith('L');
-  const disabledClass = (t1Placeholder || t2Placeholder) ? 'disabled' : '';
-
-  return `
-    <div class="match-card card predictor-match-card ${disabledClass} ${hasPred ? 'live-match-banner' : ''}">
-      <div class="match-card-header">
-        <span class="round-badge">${m.round}</span>
-        <span>Match ${m.num}</span>
-      </div>
-      <div class="match-card-body">
-        <div class="m-team-row ${winner1Class}">
-          <div class="m-flag-name">
-            <span class="m-flag">${flag1}</span>
-            <span>${t1}</span>
-          </div>
-          <strong class="m-score">${sc1}</strong>
-        </div>
-        <div class="m-team-row ${winner2Class}">
-          <div class="m-flag-name">
-            <span class="m-flag">${flag2}</span>
-            <span>${t2}</span>
-          </div>
-          <strong class="m-score">${sc2}</strong>
-        </div>
-        ${pDisplay}
-      </div>
-      <div class="match-card-footer" style="margin-top: 10px; padding-top: 10px;">
-        <span style="font-size: 0.7rem; color: var(--text-muted)">${m.ground.split(" (")[0]}</span>
-        ${t1Placeholder || t2Placeholder ? `
-          <span style="font-size: 0.75rem; color: var(--text-muted); font-style: italic;">Awaiting previous rounds...</span>
-        ` : (isMatchOver(m) ? `
-          <span style="font-size: 0.75rem; color: var(--text-muted); font-style: italic;">Match Completed</span>
-        ` : `
-          <button class="btn-predict" onclick="openPredictor(${m.num})">
-            ${hasPred ? 'Update Prediction' : 'Predict Score'}
-          </button>
-        `)}
-      </div>
-    </div>
-  `;
-}
 
 function renderPredictorWorkspace() {
   if (!predictorMode) return;
@@ -1569,7 +1399,7 @@ function renderPredictorWorkspace() {
     roundMatches = predictorMatches.filter(m => m.round === "Final" || m.round === "Match for third place").sort((a,b) => b.num - a.num);
   }
  
-  let html = roundMatches.map(getPredictorMatchCardHTML).join('');
+  let html = roundMatches.map(getMatchCardHTML).join('');
 
   // Add round selectors to sidebar or top of area
   let navigationHTML = `
@@ -1598,7 +1428,7 @@ window.switchPredictorRound = function(idx) {
     roundMatches = predictorMatches.filter(m => m.round === "Final" || m.round === "Match for third place").sort((a,b) => b.num - a.num);
   }
 
-  let html = roundMatches.map(getPredictorMatchCardHTML).join('');
+  let html = roundMatches.map(getMatchCardHTML).join('');
 
   // Rerender round navigation buttons
   let navigationHTML = `
