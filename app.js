@@ -661,8 +661,10 @@ function renderOverviewTab() {
   
   if (liveMatch) {
     elements.liveMatchBanner.classList.remove('hidden');
-    const flag1 = getFlag(liveMatch.team1);
-    const flag2 = getFlag(liveMatch.team2);
+    const t1 = liveMatch.team1_resolved || liveMatch.team1;
+    const t2 = liveMatch.team2_resolved || liveMatch.team2;
+    const flag1 = getFlag(t1);
+    const flag2 = getFlag(t2);
     const minuteStr = getMatchMinute(liveMatch);
     
     const info = getMatchScoreInfo(liveMatch);
@@ -678,7 +680,7 @@ function renderOverviewTab() {
       <div class="live-match-scores">
         <div class="live-team">
           <span class="live-flag">${flag1}</span>
-          <span class="live-team-name">${liveMatch.team1}</span>
+          <span class="live-team-name">${t1}</span>
         </div>
         <div class="live-score-val">
           ${sc1}
@@ -689,14 +691,14 @@ function renderOverviewTab() {
         </div>
         <div class="live-team">
           <span class="live-flag">${flag2}</span>
-          <span class="live-team-name">${liveMatch.team2}</span>
+          <span class="live-team-name">${t2}</span>
         </div>
       </div>
     `;
 
     // Add penalty shootout display if available
     if (liveMatch.score && liveMatch.score.p) {
-      const pWinner = liveMatch.score.p[0] > liveMatch.score.p[1] ? liveMatch.team1 : liveMatch.team2;
+      const pWinner = liveMatch.score.p[0] > liveMatch.score.p[1] ? t1 : t2;
       bannerHTML += `
         <div style="text-align: center; font-size: 0.9rem; font-weight: 700; color: var(--accent-gold); margin-bottom: 1rem;">
           ${pWinner} won ${liveMatch.score.p[0]} - ${liveMatch.score.p[1]} on Penalties
@@ -711,8 +713,8 @@ function renderOverviewTab() {
         <div class="live-match-events" style="margin-top: 10px;">
           <div class="scorer-list">
             <div style="display: flex; justify-content: space-between; font-size: 0.75rem; border-bottom: 1px solid var(--border-color); padding-bottom: 4px; margin-bottom: 4px;">
-              <span>Goals (${liveMatch.team1}): ${liveMatch.goals1.map(g => `${g.name} ${g.minute}'`).join(', ') || 'None'}</span>
-              <span>Goals (${liveMatch.team2}): ${liveMatch.goals2.map(g => `${g.name} ${g.minute}'`).join(', ') || 'None'}</span>
+              <span>Goals (${t1}): ${liveMatch.goals1.map(g => `${g.name} ${g.minute}'`).join(', ') || 'None'}</span>
+              <span>Goals (${t2}): ${liveMatch.goals2.map(g => `${g.name} ${g.minute}'`).join(', ') || 'None'}</span>
             </div>
           </div>
         </div>
@@ -742,8 +744,10 @@ function renderOverviewTab() {
   let todaysHTML = "";
   if (todaysMatches.length > 0) {
     todaysHTML = todaysMatches.map(m => {
-      const flag1 = getFlag(m.team1);
-      const flag2 = getFlag(m.team2);
+      const t1 = m.team1_resolved || m.team1;
+      const t2 = m.team2_resolved || m.team2;
+      const flag1 = getFlag(t1);
+      const flag2 = getFlag(t2);
       const isMatchLive = getActiveLiveMatch()?.num === m.num;
       
       const info = getMatchScoreInfo(m);
@@ -766,11 +770,11 @@ function renderOverviewTab() {
           </div>
           <div class="match-teams-col">
             <div class="match-team-row ${winner1Class}">
-              <div class="match-team-name-flag"><span>${flag1}</span> ${m.team1}</div>
+              <div class="match-team-name-flag"><span>${flag1}</span> ${t1}</div>
               <span class="match-score-num">${sc1}</span>
             </div>
             <div class="match-team-row ${winner2Class}">
-              <div class="match-team-name-flag"><span>${flag2}</span> ${m.team2}</div>
+              <div class="match-team-name-flag"><span>${flag2}</span> ${t2}</div>
               <span class="match-score-num">${sc2}</span>
             </div>
             ${info.penaltiesStr ? `<div style="font-size: 0.7rem; color: var(--accent-gold); font-weight: 600; text-align: right; margin-top: 2px;">${info.penaltiesStr}</div>` : ''}
@@ -836,8 +840,10 @@ function renderOverviewTab() {
   let recentHTML = "";
   if (recentMatches.length > 0) {
     recentHTML = recentMatches.map(m => {
-      const flag1 = getFlag(m.team1);
-      const flag2 = getFlag(m.team2);
+      const t1 = m.team1_resolved || m.team1;
+      const t2 = m.team2_resolved || m.team2;
+      const flag1 = getFlag(t1);
+      const flag2 = getFlag(t2);
       const info = getMatchScoreInfo(m);
       const winner1Class = info.winnerId === 'team1' ? 'winner' : '';
       const winner2Class = info.winnerId === 'team2' ? 'winner' : '';
@@ -854,11 +860,11 @@ function renderOverviewTab() {
           </div>
           <div class="match-teams-col">
             <div class="match-team-row ${winner1Class}">
-              <div class="match-team-name-flag"><span>${flag1}</span> ${m.team1}</div>
+              <div class="match-team-name-flag"><span>${flag1}</span> ${t1}</div>
               <span class="match-score-num">${info.score1}</span>
             </div>
             <div class="match-team-row ${winner2Class}">
-              <div class="match-team-name-flag"><span>${flag2}</span> ${m.team2}</div>
+              <div class="match-team-name-flag"><span>${flag2}</span> ${t2}</div>
               <span class="match-score-num">${info.score2}</span>
             </div>
             ${info.penaltiesStr ? `<div style="font-size: 0.7rem; color: var(--accent-gold); font-weight: 600; text-align: right; margin-top: 2px;">${info.penaltiesStr}</div>` : ''}
