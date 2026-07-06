@@ -531,7 +531,7 @@ function processAndRender() {
 
 // Recursive helper to get the winner of a match
 function getMatchWinner(match) {
-  if (!match || !match.score) return null;
+  if (!match || !match.score || match.isPrediction) return null;
   
   // Check penalties first
   if (match.score.p) {
