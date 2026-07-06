@@ -359,6 +359,13 @@ function processAndRender() {
     const mIndex = activeMatches.findIndex(m => m.num === parseInt(num));
     if (mIndex !== -1) {
       const match = activeMatches[mIndex];
+      
+      // If the match has an actual score in baseMatches (live or completed), do not overwrite it
+      const baseMatch = baseMatches.find(bm => bm.num === match.num);
+      if (baseMatch && baseMatch.score && !baseMatch.isPrediction) {
+        continue;
+      }
+
       const p = predictions[num];
       match.score = {
         ft: p.ft
@@ -780,7 +787,13 @@ function renderOverviewTab() {
             ${info.penaltiesStr ? `<div style="font-size: 0.7rem; color: var(--accent-gold); font-weight: 600; text-align: right; margin-top: 2px;">${info.penaltiesStr}</div>` : ''}
           </div>
           <div class="match-action-col">
-            ${isMatchOver(m) ? '' : `
+            ${isMatchOver(m) ? `
+              ${predictions[m.num] ? `
+                <span style="font-size: 0.7rem; color: var(--accent-gold); font-weight: 600; border: 1px dashed rgba(245, 158, 11, 0.35); padding: 0.15rem 0.35rem; border-radius: var(--radius-sm)">
+                  Pred: ${predictions[m.num].ft[0]}-${predictions[m.num].ft[1]}
+                </span>
+              ` : ''}
+            ` : `
               <button class="btn-predict" onclick="openPredictor(${m.num})">
                 ${predictions[m.num] ? 'Edit Pred' : 'Predict'}
               </button>
@@ -869,6 +882,13 @@ function renderOverviewTab() {
             </div>
             ${info.penaltiesStr ? `<div style="font-size: 0.7rem; color: var(--accent-gold); font-weight: 600; text-align: right; margin-top: 2px;">${info.penaltiesStr}</div>` : ''}
           </div>
+          ${predictions[m.num] ? `
+            <div class="match-action-col">
+              <span style="font-size: 0.7rem; color: var(--accent-gold); font-weight: 600; border: 1px dashed rgba(245, 158, 11, 0.35); padding: 0.15rem 0.35rem; border-radius: var(--radius-sm)">
+                Pred: ${predictions[m.num].ft[0]}-${predictions[m.num].ft[1]}
+              </span>
+            </div>
+          ` : ''}
         </div>
       `;
     }).join('');
@@ -1200,7 +1220,16 @@ function renderMatchesList() {
               <button class="btn-predict" onclick="openPredictor(${m.num})">
                 ${predictions[m.num] || m.isPrediction ? 'Edit Pred' : 'Predict'}
               </button>
-            ` : `<span class="status-indicator q" style="background: transparent; color: var(--text-muted)">${statusLabel}</span>`}
+            ` : `
+              <div style="display: flex; align-items: center; gap: 0.5rem;">
+                ${predictions[m.num] ? `
+                  <span class="status-indicator" style="background: rgba(245, 158, 11, 0.12); color: var(--accent-gold); border: 1px solid rgba(245, 158, 11, 0.2); font-size: 0.7rem; font-weight: 600; padding: 0.15rem 0.4rem; border-radius: var(--radius-sm)">
+                    Pred: ${predictions[m.num].ft[0]}-${predictions[m.num].ft[1]}
+                  </span>
+                ` : ''}
+                <span class="status-indicator q" style="background: transparent; color: var(--text-muted); font-size: 0.75rem">${statusLabel}</span>
+              </div>
+            `}
           </div>
         </div>
       `;
@@ -1792,7 +1821,7 @@ window.openMatchDetails = function(event, matchNum) {
     let pExtra = "";
     if (p.etPlayed) pExtra += " AET";
     if (p.pPlayed) {
-      const pWinner = p.pWinner === 1 ? t1 : t2;
+      const pWinner = p.p[0] > p.p[1] ? t1 : t2;
       pExtra += ` (${p.p[0]}-${p.p[1]} p - Winner: ${pWinner})`;
     }
     predictionHTML = `
