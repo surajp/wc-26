@@ -88,6 +88,19 @@ function getActiveLiveMatch() {
   return activeMatches.find(m => m.num === liveBase.num) || liveBase;
 }
 
+function isMatchCurrentlyLive(match) {
+  if (!match) return false;
+  const now = Date.now();
+  const baseMatch = baseMatches.find(bm => bm.num === match.num) || match;
+  const kickoffMs = parseMatchDateTime(baseMatch.date, baseMatch.time).getTime();
+  if (isNaN(kickoffMs)) return false;
+  const elapsedMs = now - kickoffMs;
+  const isKnockout = !baseMatch.group;
+  const durationMs = (isKnockout ? 135 : 120) * 60000;
+  return elapsedMs >= 0 && elapsedMs <= durationMs;
+}
+
+
 function getMatchMinute(match) {
   const now = Date.now();
   const kickoffMs = parseMatchDateTime(match.date, match.time).getTime();
@@ -360,9 +373,12 @@ function processAndRender() {
     if (mIndex !== -1) {
       const match = activeMatches[mIndex];
       
-      // If the match has an actual score in baseMatches (live or completed), do not overwrite it
+      // If the match is live or completed (by kickoff time or score), do not overwrite it with prediction
       const baseMatch = baseMatches.find(bm => bm.num === match.num);
-      if (baseMatch && baseMatch.score && !baseMatch.isPrediction) {
+      const kickoffMs = parseMatchDateTime(baseMatch.date, baseMatch.time).getTime();
+      const isLiveOrOver = (baseMatch.score && !baseMatch.isPrediction) || (!isNaN(kickoffMs) && Date.now() >= kickoffMs);
+      
+      if (isLiveOrOver) {
         continue;
       }
 
@@ -482,7 +498,7 @@ function isMatchOver(m) {
   if (m.isPrediction) return false;
   
   // If the match is currently live, it is not considered over yet
-  const isLive = getActiveLiveMatch()?.num === m.num;
+  const isLive = isMatchCurrentlyLive(m);
   if (isLive) return false;
   
   return true;
@@ -773,11 +789,11 @@ function renderOverviewTab() {
       const t2 = m.team2_resolved || m.team2;
       const flag1 = getFlag(t1);
       const flag2 = getFlag(t2);
-      const isMatchLive = getActiveLiveMatch()?.num === m.num;
+      const isMatchLive = isMatchCurrentlyLive(m);
       
       const info = getMatchScoreInfo(m);
-      const sc1 = m.score ? info.score1 : "";
-      const sc2 = m.score ? info.score2 : "";
+      const sc1 = isMatchLive ? (info.score1 !== "" ? info.score1 : 0) : (m.score ? info.score1 : "");
+      const sc2 = isMatchLive ? (info.score2 !== "" ? info.score2 : 0) : (m.score ? info.score2 : "");
       const winner1Class = info.winnerId === 'team1' ? 'winner' : '';
       const winner2Class = info.winnerId === 'team2' ? 'winner' : '';
       
@@ -1170,8 +1186,9 @@ function renderMatchesList() {
       const t2 = m.team2_resolved || m.team2;
       
       const info = getMatchScoreInfo(m);
-      const sc1 = m.score ? info.score1 : "";
-      const sc2 = m.score ? info.score2 : "";
+      const isLive = isMatchCurrentlyLive(m);
+      const sc1 = isLive ? (info.score1 !== "" ? info.score1 : 0) : (m.score ? info.score1 : "");
+      const sc2 = isLive ? (info.score2 !== "" ? info.score2 : 0) : (m.score ? info.score2 : "");
       const winner1Class = info.winnerId === 'team1' ? 'winner' : '';
       const winner2Class = info.winnerId === 'team2' ? 'winner' : '';
       
