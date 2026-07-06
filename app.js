@@ -703,6 +703,23 @@ function renderOverviewTab() {
       </div>
     `;
 
+    // Check and add predicted score if user has predicted it
+    const pred = predictions[liveMatch.num];
+    if (pred) {
+      let predExtra = "";
+      if (pred.etPlayed) predExtra += " (AET)";
+      if (pred.pPlayed) {
+        const pWinnerName = pred.p[0] > pred.p[1] ? t1 : t2;
+        predExtra += ` (${pred.p[0]}-${pred.p[1]} pens · ${pWinnerName} wins)`;
+      }
+      bannerHTML += `
+        <div class="live-prediction-summary">
+          <span class="live-pred-label">🔮 Predicted Score:</span>
+          <span class="live-pred-value">${pred.ft[0]} – ${pred.ft[1]}${predExtra}</span>
+        </div>
+      `;
+    }
+
     // Add penalty shootout display if available
     if (liveMatch.score && liveMatch.score.p) {
       const pWinner = liveMatch.score.p[0] > liveMatch.score.p[1] ? t1 : t2;
@@ -1181,16 +1198,21 @@ function renderMatchesList() {
       }
 
       let statusLabel = "FT";
-      if (m.score) {
+      if (m.isPrediction) {
+        statusLabel = "PRED";
+      } else if (m.score) {
         if (info.extraInfo === "AET") statusLabel = "AET";
         else if (info.extraInfo === "Pens") statusLabel = "Pens";
       }
 
       return `
-        <div class="match-card card ${m.isPrediction ? 'live-match-banner' : ''}" onclick="openMatchDetails(event, ${m.num})">
+        <div class="match-card card ${m.isPrediction ? 'predicted-card' : ''}" onclick="openMatchDetails(event, ${m.num})">
           <div class="match-card-header">
             <span class="round-badge">${m.group || m.round}</span>
-            <span>Match ${m.num}</span>
+            <span style="display: flex; align-items: center;">
+              ${m.isPrediction ? '<span class="prediction-tag" style="font-size: 0.6rem; padding: 0.1rem 0.35rem; margin-right: 0.4rem;">PREDICTION</span>' : ''}
+              <span>Match ${m.num}</span>
+            </span>
           </div>
           
           <div class="match-card-body">
@@ -1199,7 +1221,7 @@ function renderMatchesList() {
                 <span class="m-flag">${flag1}</span>
                 <span>${t1}</span>
               </div>
-              <span class="m-score">${sc1 !== "" ? sc1 : ""}</span>
+              <span class="m-score ${m.isPrediction ? 'predicted-score-value' : ''}">${sc1 !== "" ? sc1 : ""}</span>
             </div>
             
             <div class="m-team-row ${winner2Class}">
@@ -1207,8 +1229,9 @@ function renderMatchesList() {
                 <span class="m-flag">${flag2}</span>
                 <span>${t2}</span>
               </div>
-              <span class="m-score">${sc2 !== "" ? sc2 : ""}</span>
+              <span class="m-score ${m.isPrediction ? 'predicted-score-value' : ''}">${sc2 !== "" ? sc2 : ""}</span>
             </div>
+            ${m.isPrediction ? `<div class="predicted-scores-sublabel">🔮 Predicted Scoreline</div>` : ''}
             ${pDisplay}
             ${scorerDisplay}
           </div>
@@ -1296,9 +1319,9 @@ function renderTournamentBracket() {
 
           return `
             <div class="bracket-match-wrapper">
-              <div class="bracket-match-card" style="cursor: pointer;" onclick="openMatchDetails(event, ${m.num})">
+              <div class="bracket-match-card ${m.isPrediction ? 'predicted-bracket-card' : ''}" style="cursor: pointer;" onclick="openMatchDetails(event, ${m.num})">
                 <div class="b-match-num">
-                  <span>Match ${m.num}</span>
+                  <span>Match ${m.num}${m.isPrediction ? ' <span class="prediction-tag" style="font-size: 0.5rem; padding: 0.05rem 0.2rem; border-radius: 2px;">PRED</span>' : ''}</span>
                   <span style="font-size: 0.6rem;">${m.round === 'Match for third place' ? '3rd Place' : formatDateInWords(m.date)}</span>
                 </div>
                 
